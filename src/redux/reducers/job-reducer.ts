@@ -1,5 +1,5 @@
-import {Dispatch} from "redux";
 import {jobsAPI} from "../api/api";
+import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
 
 
 const initialState = {
@@ -9,54 +9,43 @@ const initialState = {
     selectedJob: null as string | null
 }
 
-export const jobReducer = (state = initialState, action: ActionType) => {
-    switch (action.type) {
-        case "SET_JOBS":
-            return {
-                ...state,
-                jobs: action.payload
-            }
-
-        case "SET_PROVIDERS":
-            return {
-                ...state,
-                providers: action.payload
-            }
-        case "SET_LOADING":
-            return {
-                ...state,
-                loading: action.status
-            }
-        case "SET_SELECTED_JOB":
-            return {
-                ...state,
-                selectedJob: action.job
-            }
-        default:
-            return state
-    }
-}
-
-// acton
-const setJobs = (payload: jobsType[]) => ({type: 'SET_JOBS', payload} as const)
-const setProviders = (payload: providerType[]) => ({type: 'SET_PROVIDERS', payload} as const)
-const setLoading = (status: boolean) => ({type: 'SET_LOADING', status} as const)
-export const setSelectedJob = (job: string) => ({type: 'SET_SELECTED_JOB', job} as const)
-
-
 // thunks
-export const setJobsTC = () => (dispatch: Dispatch) => {
+export const setJobsTC = createAsyncThunk('job/setJobsTC', (a = undefined, thunkAPI) => {
     return jobsAPI.getJobs().then((response) => {
-        dispatch(setJobs(response.data))
-        dispatch(setLoading(false))
+        thunkAPI.dispatch(setLoading({status: false}))
+        return {jobs: response.data}
     })
-}
-export const setProvidersTC = () => (dispatch: Dispatch) => {
+})
+export const setProvidersTC = createAsyncThunk('job/setProvidersTC', () => {
     return jobsAPI.getProviders().then((response) => {
-        dispatch(setProviders(response.data))
+        return {providers: response.data}
     })
-}
+})
 
+const slice = createSlice({
+    name: "job",
+    initialState: initialState,
+    reducers: {
+        setLoading(state, action: PayloadAction<{ status: boolean }>) {
+            state.loading = action.payload.status
+        },
+        setSelectedJob(state, action: PayloadAction<{ job: string }>) {
+            state.selectedJob = action.payload.job
+        }
+    },
+    extraReducers: builder => {
+        builder.addCase(setJobsTC.fulfilled, (state, action) => {
+            state.jobs = action.payload.jobs
+        })
+        builder.addCase(setProvidersTC.fulfilled, (state, action) => {
+            state.providers = action.payload.providers
+        })
+
+    }
+})
+
+export const jobReducer = slice.reducer
+export const {setLoading, setSelectedJob} = slice.actions
 
 // types
 export type jobsType = {
@@ -76,7 +65,3 @@ export type providerType = {
     job: string,
     about: string
 }
-type ActionType = ReturnType<typeof setJobs>
-    | ReturnType<typeof setProviders>
-    | ReturnType<typeof setLoading>
-    | ReturnType<typeof setSelectedJob>

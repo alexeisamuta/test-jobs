@@ -72,7 +72,7 @@ export default function Jobs(props: Props) {
                     <CircularProgress/>
                 </Grid>) : (
                     jobs.map((el) => (
-                        <ListItem button key={el.title} onClick={() => dispatch(setSelectedJob(el.jobId))}
+                        <ListItem button key={el.title} onClick={() => dispatch(setSelectedJob({job: el.jobId}))}
                                   selected={selectedJob === el.jobId}>
                             <ListItemText primary={el.title}/>
                         </ListItem>
