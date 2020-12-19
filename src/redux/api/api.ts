@@ -11,5 +11,4 @@ export const jobsAPI = {
     getProviders() {
         return instance.get('providers')
     },
-
 }
